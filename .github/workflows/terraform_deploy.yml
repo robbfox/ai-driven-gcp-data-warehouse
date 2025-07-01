@@ -25,9 +25,7 @@ jobs:
     - name: Run Python tests
       run: |
         export PYTHONPATH=$(pwd)
-        pytest src/tests/test_load_data.py
-      env:
-        GCS_BUCKET_NAME: robb-gemini-bq
+        GCS_BUCKET_NAME=robb-gemini-bq pytest src/tests/test_load_data.py
 
     - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
