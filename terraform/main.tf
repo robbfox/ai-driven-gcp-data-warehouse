@@ -1,4 +1,11 @@
 
+terraform {
+  backend "gcs" {
+    bucket = "robb-gemini-bq"
+    prefix = "terraform/state"
+  }
+}
+
 # Terraform configuration for Google BigQuery Data Warehouse
 
 
