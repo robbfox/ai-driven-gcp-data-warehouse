@@ -44,7 +44,7 @@ jobs:
       working-directory: ./terraform
 
     - name: Terraform Apply
-      run: terraform apply -auto-approve
+      run: terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}"
       working-directory: ./terraform
       env:
         GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}

@@ -1,10 +1,22 @@
 
 # Terraform configuration for Google BigQuery Data Warehouse
 
+variable "project_id" {
+  description = "The GCP project ID."
+  type        = string
+}
+
 provider "google" {
-  project = "robbproject1" # Replace with your GCP project ID
+  project = var.project_id
   region  = "us-central1"
 }
+
+resource "google_storage_bucket" "olist_ecommerce_data" {
+  name          = "${var.project_id}-olist-ecommerce-data"
+  location      = "US"
+  force_destroy = false # Set to true for easy cleanup during development, but be cautious in production
+}
+
 
 resource "google_bigquery_dataset" "olist_ecommerce" {
   dataset_id = "olist_ecommerce"

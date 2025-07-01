@@ -19,17 +19,18 @@ def main():
     # Establish a connection to the Google Cloud BigQuery client
     client = bigquery.Client()
 
-    # Get the absolute path to the project's root directory
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    data_dir = os.path.join(project_root, "data")
+    # Define the GCS bucket name
+    bucket_name = os.environ.get("GCS_BUCKET_NAME")
+    if not bucket_name:
+        raise ValueError("GCS_BUCKET_NAME environment variable not set.")
 
     # Loop through each filename
     for filename in csv_files:
-        # Construct the full file path to the CSV in the data/ directory
-        file_path = os.path.join(data_dir, filename)
+        # Construct the full GCS path to the CSV
+        gcs_path = f"gs://{bucket_name}/{filename}"
 
-        # Read the CSV file into a pandas DataFrame
-        df = pandas.read_csv(file_path)
+        # Read the CSV file into a pandas DataFrame directly from GCS
+        df = pandas.read_csv(gcs_path)
 
         # Determine the correct destination table ID
         table_id = f"olist_ecommerce.{filename.replace('.csv', '')}"
