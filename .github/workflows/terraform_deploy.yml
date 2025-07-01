@@ -39,6 +39,12 @@ jobs:
       with:
         terraform_version: 1.x
 
+    - name: Terraform Force Unlock
+      run: terraform force-unlock 1751387199997347
+      working-directory: ./terraform
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
     - name: Terraform Init
       run: terraform init
       working-directory: ./terraform
