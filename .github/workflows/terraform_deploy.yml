@@ -26,6 +26,8 @@ jobs:
       run: |
         export PYTHONPATH=$(pwd)
         pytest src/tests/test_load_data.py
+      env:
+        GCS_BUCKET_NAME: robb-gemini-bq
 
     - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
