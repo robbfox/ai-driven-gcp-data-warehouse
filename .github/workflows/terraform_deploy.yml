@@ -51,3 +51,9 @@ jobs:
       env:
         GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+    - name: Run Data Loading Script
+      run: python src/load_data.py
+      env:
+        GCS_BUCKET_NAME: robb-gemini-bq
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
