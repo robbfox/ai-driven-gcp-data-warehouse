@@ -1,5 +1,4 @@
-terraform import google_storage_bucket.olist_ecommerce_data robbproject1>-olist-ecommerce-data
-terraform import google_bigquery_dataset.olist_ecommerce robbproject1:olist_ecommerce
+
 
 
 terraform {
