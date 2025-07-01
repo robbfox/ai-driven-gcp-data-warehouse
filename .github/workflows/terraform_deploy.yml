@@ -45,6 +45,18 @@ jobs:
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
+    - name: Terraform Import Storage Bucket
+      run: terraform import google_storage_bucket.olist_ecommerce_data ${{ secrets.GCP_PROJECT_ID }}-olist-ecommerce-data
+      working-directory: ./terraform
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+    - name: Terraform Import BigQuery Dataset
+      run: terraform import google_bigquery_dataset.olist_ecommerce ${{ secrets.GCP_PROJECT_ID }}:olist_ecommerce
+      working-directory: ./terraform
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
     - name: Terraform Apply
       run: terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}"
       working-directory: ./terraform
