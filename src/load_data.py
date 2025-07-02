@@ -63,6 +63,8 @@ def main():
                 # This will replace the table content on every run.
                 # Use "WRITE_APPEND" if you want to add to it instead.
                 write_disposition="WRITE_TRUNCATE",
+                allow_quoted_newlines=True,
+                max_bad_records=1000 
             )
 
             # Start the load job
