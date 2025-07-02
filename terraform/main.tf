@@ -17,10 +17,6 @@ provider "google" {
   region  = "us-central1"
 }
 
-import {
-  id = "robbproject1:olist_ecommerce"
-  to = google_bigquery_dataset.olist_ecommerce
-}
 
 
 
