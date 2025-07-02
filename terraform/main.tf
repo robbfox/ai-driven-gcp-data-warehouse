@@ -20,11 +20,6 @@ provider "google" {
 
 
 
-# This block tells Terraform how to find the existing BigQuery dataset
-import {
-  id = "robbproject1:olist_ecommerce" # The GCP resource ID
-  to = google_bigquery_dataset.olist_ecommerce # The Terraform resource address
-}
 
 data "google_storage_bucket" "data_source_bucket" {
   name = "robb-gemini-bq"
