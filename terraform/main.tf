@@ -18,11 +18,7 @@ provider "google" {
 }
 
 
-# This block tells Terraform how to find the existing GCS bucket
-import {
-  id = "robbproject1-olist-ecommerce-data" # The GCP resource ID
-  to = google_storage_bucket.olist_ecommerce_data  # The Terraform resource address
-}
+
 
 # This block tells Terraform how to find the existing BigQuery dataset
 import {
@@ -37,6 +33,7 @@ data "google_storage_bucket" "data_source_bucket" {
 resource "google_bigquery_dataset" "olist_ecommerce" {
   dataset_id = "olist_ecommerce"
   location   = "US"
+  project    = var.project_id
 }
 
 resource "google_bigquery_table" "olist_customers_dataset" {
