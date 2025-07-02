@@ -5,12 +5,12 @@ name: 'Test, Plan, and Deploy Infrastructure'
 on:
   push:
     branches:
-      - master  # <--- IMPORTANT: Change this to 'master' if that is your default branch name
+      - master
   pull_request:
 
 permissions:
   contents: 'read'
-  id-token: 'write' # Required for Workload Identity Federation (best practice)
+  id-token: 'write'
 
 jobs:
   test-and-deploy:
@@ -18,19 +18,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout the repository code
+    # 1. Checkout repository code
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    # 2. Authenticate to Google Cloud (MODERN METHOD)
-    # This step must come before any step that needs to access GCP.
+    # 2. Authenticate to Google Cloud
     - name: Authenticate to Google Cloud
       id: auth
       uses: 'google-github-actions/auth@v1'
       with:
         credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-    # 3. Set up Python for testing and data loading
+    # 3. Set up Python and install dependencies
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -39,13 +38,13 @@ jobs:
     - name: Install Python Dependencies
       run: pip install -r requirements.txt
 
-    # 4. Run Python tests (which may need GCP access)
+    # 4. Run Python tests
+    # THIS STEP STILL NEEDS GCP_PROJECT_ID FOR THE PYTHON CLIENT
     - name: Run Python Tests
       run: |
         export PYTHONPATH=$(pwd)
         pytest src/tests/test_load_data.py
       env:
-        # Pass secrets and variables as environment variables to your tests
         GCS_BUCKET_NAME: 'robb-gemini-bq'
         GCP_PROJECT_ID: '${{ secrets.GCP_PROJECT_ID }}'
 
@@ -53,28 +52,30 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
-        terraform_version: '1.5.0' # Pinning the version is a best practice
+        terraform_version: '1.5.0'
 
-    # 6. Terraform Init
-    # We must specify the working-directory for all terraform commands
+    # 6. Terraform Init - No changes here
     - name: Terraform Init
       run: terraform init
       working-directory: ./terraform
 
-    # 7. Terraform Plan (CRITICAL SAFETY STEP)
+    # 7. Terraform Plan - SIMPLIFIED
     - name: Terraform Plan
-      run: terraform plan -var="project_id=${{ secrets.GCP_PROJECT_ID }}"
+      # The -var flag is no longer needed because the project is hardcoded in main.tf
+      run: terraform plan
       working-directory: ./terraform
 
-    # 8. Terraform Apply (only on a push to the main/master branch)
+    # 8. Terraform Apply - SIMPLIFIED
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/master' && github.event_name == 'push' 
-      run: terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}"
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      # The -var flag is no longer needed
+      run: terraform apply -auto-approve
       working-directory: ./terraform
 
-    # 9. Run the data loading script after infrastructure is applied
+    # 9. Run the data loading script
+    # THIS STEP STILL NEEDS GCP_PROJECT_ID FOR THE PYTHON CLIENT
     - name: Run Data Loading Script
-      if: github.ref == 'refs/heads/master' && github.event_name == 'push' 
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
       run: python src/load_data.py
       env:
         GCS_BUCKET_NAME: 'robb-gemini-bq'
