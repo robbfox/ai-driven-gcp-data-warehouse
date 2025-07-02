@@ -39,39 +39,19 @@ jobs:
       with:
         terraform_version: 1.x
 
-    - name: Terraform Force Unlock
-      run: terraform force-unlock 1751387199997347
-      working-directory: ./terraform
-      env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+    
 
     - name: Terraform Init
       run: terraform init
       working-directory: ./terraform
-      env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-    - name: Terraform Import Storage Bucket
-      run: terraform import google_storage_bucket.olist_ecommerce_data ${{ secrets.GCP_PROJECT_ID }}-olist-ecommerce-data
-      working-directory: ./terraform
-      env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-
-    - name: Terraform Import BigQuery Dataset
-      run: terraform import google_bigquery_dataset.olist_ecommerce ${{ secrets.GCP_PROJECT_ID }}:olist_ecommerce
-      working-directory: ./terraform
-      env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+    
 
     - name: Terraform Apply
-      run: terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}"
+      run: terraform apply -auto-approve
       working-directory: ./terraform
-      env:
-        GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
-        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
     - name: Run Data Loading Script
       run: python src/load_data.py
       env:
         GCS_BUCKET_NAME: robb-gemini-bq
-        GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
