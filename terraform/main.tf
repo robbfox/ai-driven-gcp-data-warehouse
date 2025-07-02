@@ -13,7 +13,7 @@ terraform {
 
 
 provider "google" {
-  project = var.project_id
+  project = "robbproject1
   region  = "us-central1"
 }
 
