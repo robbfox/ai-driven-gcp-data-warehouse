@@ -13,7 +13,7 @@ terraform {
 
 
 provider "google" {
-  project = "robbproject1
+  project = "robbproject1"
   region  = "us-central1"
 }
 
