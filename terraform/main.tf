@@ -30,12 +30,9 @@ import {
   to = google_bigquery_dataset.olist_ecommerce # The Terraform resource address
 }
 
-resource "google_storage_bucket" "olist_ecommerce_data" {
-  name          = "robbproject1-olist-ecommerce-data"
-  location      = "US"
-  force_destroy = false # Set to true for easy cleanup during development, but be cautious in production
+data "google_storage_bucket" "data_source_bucket" {
+  name = "robb-gemini-bq"
 }
-
 
 resource "google_bigquery_dataset" "olist_ecommerce" {
   dataset_id = "olist_ecommerce"
