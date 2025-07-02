@@ -33,7 +33,7 @@ data "google_storage_bucket" "data_source_bucket" {
 resource "google_bigquery_dataset" "olist_ecommerce" {
   dataset_id = "olist_ecommerce"
   location   = "US"
-  project    = var.project_id
+  project    = "robbproject1"
 }
 
 resource "google_bigquery_table" "olist_customers_dataset" {
