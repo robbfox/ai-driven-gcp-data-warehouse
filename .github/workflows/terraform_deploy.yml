@@ -1,57 +1,58 @@
+# In .github/workflows/your-workflow-file.yml
 
-name: Terraform Deploy
+name: 'Deploy Infrastructure with Terraform'
 
 on:
   push:
     branches:
-      - master # or your default branch
+      - main # Or your default branch
+  pull_request:
+
+permissions:
+  contents: 'read'
+  # This permission is required for Workload Identity Federation, a more advanced auth method.
+  # It's good practice to include it even if you're using SA keys.
+  id-token: 'write'
 
 jobs:
-  test_and_deploy:
+  terraform:
+    name: 'Terraform'
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      # Step 1: Check out your repository code
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
+      # Step 2: Authenticate to Google Cloud. THIS IS THE MISSING STEP.
+      # It uses the secret you created to log in.
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: 'google-github-actions/auth@v1'
+        with:
+          # Make sure 'GCP_SA_KEY' EXACTLY matches the name of your GitHub secret
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-    - name: Install Python dependencies
-      run: pip install -r requirements.txt
+      # Step 3: Set up Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          # You can specify a specific version of Terraform if needed
+          terraform_version: 'latest'
 
-    - name: Run Python tests
-      run: |
-        export PYTHONPATH=$(pwd)
-        GCS_BUCKET_NAME=robb-gemini-bq pytest src/tests/test_load_data.py
+      # Step 4: Run Terraform Init
+      # Now that the runner is authenticated, this will succeed.
+      - name: Terraform Init
+        id: init
+        run: terraform init
 
-    - name: Set up Google Cloud SDK
-      uses: google-github-actions/setup-gcloud@v2
-      with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        export_default_credentials: true
+      # Step 5: Run Terraform Plan
+      # The -var flag is optional if the project_id is in your credentials, but explicit is better.
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -var="project_id=your-gcp-project-id"
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.x
-
-    
-
-    - name: Terraform Init
-      run: terraform init
-      working-directory: ./terraform
-
-    
-
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
-      working-directory: ./terraform
-
-    - name: Run Data Loading Script
-      run: python src/load_data.py
-      env:
-        GCS_BUCKET_NAME: robb-gemini-bq
+      # Step 6: Run Terraform Apply ONLY on pushes to the main branch
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -no-color -var="project_id=your-gcp-project-id"
