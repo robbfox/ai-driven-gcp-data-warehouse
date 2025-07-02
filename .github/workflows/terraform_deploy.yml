@@ -68,13 +68,13 @@ jobs:
 
     # 8. Terraform Apply (only on a push to the main/master branch)
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push' # Adjust 'main' if needed
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push' 
       run: terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}"
       working-directory: ./terraform
 
     # 9. Run the data loading script after infrastructure is applied
     - name: Run Data Loading Script
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push' # Adjust 'main' if needed
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push' 
       run: python src/load_data.py
       env:
         GCS_BUCKET_NAME: 'robb-gemini-bq'
