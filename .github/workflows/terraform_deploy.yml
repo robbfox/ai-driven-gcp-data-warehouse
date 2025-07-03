@@ -41,7 +41,7 @@ jobs:
 
       - name: Install Python Dependencies
         run: pip install -r requirements.txt
-        working-directory: . # Reset working-directory for this step
+        working-directory: . 
 
       - name: Authenticate to Google Cloud for Tests
         id: auth
@@ -56,7 +56,7 @@ jobs:
         env:
           GCS_BUCKET_NAME: 'robb-gemini-bq'
           GCP_PROJECT_ID: '${{ secrets.GCP_PROJECT_ID }}'
-        working-directory: . # Reset working-directory for this step
+        working-directory: . 
       
       # --- Terraform Validation ---
       - name: Setup Terraform
