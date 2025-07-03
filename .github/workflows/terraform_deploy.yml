@@ -7,87 +7,189 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - master
 
 permissions:
   contents: 'read'
-  id-token: 'write'
+  id-token: 'write' # For GCP Auth
+  pull-requests: 'write' # REQUIRED to comment on PRs
 
 jobs:
-  test-and-deploy:
-    name: 'Test and Deploy'
+  # =================================================================
+  # JOB 1: Run tests and validation checks
+  # This job runs first on every push or PR to master.
+  # =================================================================
+  test-and-validate:
+    name: 'Test and Validate'
     runs-on: ubuntu-latest
 
+    # Define defaults to avoid repetition
+    defaults:
+      run:
+        working-directory: ./terraform
+
     steps:
-    # 1. Checkout repository code
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    # 2. Authenticate to Google Cloud
-    - name: Authenticate to Google Cloud
-      id: auth
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      # --- Python Tests ---
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
-    # 3. Set up Python and install dependencies
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
+      - name: Install Python Dependencies
+        run: pip install -r requirements.txt
+        working-directory: . # Reset working-directory for this step
 
-    - name: Install Python Dependencies
-      run: pip install -r requirements.txt
+      - name: Authenticate to Google Cloud for Tests
+        id: auth
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-    # 4. Run Python tests
-    # THIS STEP STILL NEEDS GCP_PROJECT_ID FOR THE PYTHON CLIENT
-    - name: Run Python Tests
-      run: |
-        export PYTHONPATH=$(pwd)
-        pytest src/tests/test_load_data.py
-      env:
-        GCS_BUCKET_NAME: 'robb-gemini-bq'
-        GCP_PROJECT_ID: '${{ secrets.GCP_PROJECT_ID }}'
-
-    # 5. Set up Terraform
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: '1.5.0'
-
-    # 6. Terraform Init - No changes here
-    - name: Terraform Init
-      run: terraform init
-      working-directory: ./terraform
-
-    # 7. Terraform Plan - SIMPLIFIED
-    - name: Terraform Plan
-      # The -var flag is no longer needed because the project is hardcoded in main.tf
-      run: terraform plan
-      working-directory: ./terraform
-
-      # Terraform format check
-    - name: Terraform Format Check
-      run: terraform fmt -check
-      working-directory: ./terraform
-
-      # Validate Terraform configuration files
-    - name: Terraform Validate
-      run: terraform validate
-      working-directory: ./terraform
+      - name: Run Python Tests
+        run: |
+          export PYTHONPATH=$(pwd)
+          pytest src/tests/test_load_data.py
+        env:
+          GCS_BUCKET_NAME: 'robb-gemini-bq'
+          GCP_PROJECT_ID: '${{ secrets.GCP_PROJECT_ID }}'
+        working-directory: . # Reset working-directory for this step
       
+      # --- Terraform Validation ---
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.0'
 
-    # 8. Terraform Apply - SIMPLIFIED
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-      # The -var flag is no longer needed
-      run: terraform apply -auto-approve
-      working-directory: ./terraform
+      - name: Terraform Init
+        run: terraform init
+      
+      - name: Terraform Format Check
+        run: terraform fmt -check
 
-    # 9. Run the data loading script
-    # THIS STEP STILL NEEDS GCP_PROJECT_ID FOR THE PYTHON CLIENT
-    - name: Run Data Loading Script
-      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-      run: python src/load_data.py
-      env:
-        GCS_BUCKET_NAME: 'robb-gemini-bq'
-        GCP_PROJECT_ID: '${{ secrets.GCP_PROJECT_ID }}'
+      - name: Terraform Validate
+        run: terraform validate
+
+  # =================================================================
+  # JOB 2: Generate Terraform Plan
+  # This job depends on the test-and-validate job succeeding.
+  # =================================================================
+  terraform-plan:
+    name: 'Terraform Plan'
+    runs-on: ubuntu-latest
+    needs: test-and-validate
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.0'
+
+      - name: Terraform Init
+        run: terraform init
+
+      # --- STEP 1: CAPTURE the plan output to a file ---
+      - name: Terraform Plan
+        id: plan
+        # We redirect stdout to a text file.
+        # -no-color is essential for clean output in a comment.
+        run: terraform plan -no-color > tfplan.txt
+        # This is a critical improvement! It ensures that even if the plan
+        # fails (e.g., due to an error), the workflow will continue to the
+        # next step, allowing the error message to be posted to the PR.
+        continue-on-error: true
+
+      # --- STEP 2: EXPOSE the file content as a step output ---
+      - name: Create Plan Output
+        id: plan_output
+        # This step reads the file and uses the special GITHUB_OUTPUT syntax
+        # to create a multi-line output named 'plan' for the next step to use.
+        run: |
+          plan_content=$(cat tfplan.txt)
+          echo "plan<<EOF" >> $GITHUB_OUTPUT
+          echo "$plan_content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        working-directory: ./terraform
+
+      # --- STEP 3: CONSUME the output in the PR comment ---
+      - name: Post Terraform Plan to PR
+        # This step only runs for Pull Requests
+        if: github.event_name == 'pull_request'
+        # Using a well-supported action designed for PR comments
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          # Here we correctly reference the output we created in the previous step
+          message: |
+            ### Terraform Plan Results
+            
+            ```terraform
+            ${{ steps.plan_output.outputs.plan }}
+            ```
+          # This tag allows the action to find and update its own comment
+          # on subsequent pushes to the PR, avoiding clutter.
+          comment_tag: terraform-plan
+            ```
+
+  # =================================================================
+  # JOB 3: Apply the plan and load data
+  # This job ONLY runs on a push to the 'master' branch.
+  # =================================================================
+  deploy-and-load:
+    name: 'Deploy and Load Data'
+    runs-on: ubuntu-latest
+    needs: test-and-validate # Also requires tests to pass
+
+    # Only run this job on a push to the master branch
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.0'
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: ./terraform
+
+      # --- Data Loading Steps ---
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python Dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Run Data Loading Script
+        run: python src/load_data.py
+        env:
+          GCS_BUCKET_NAME: 'robb-gemini-bq'
+          GCP_PROJECT_ID: '${{ secrets.GCP_PROJECT_ID }}'
