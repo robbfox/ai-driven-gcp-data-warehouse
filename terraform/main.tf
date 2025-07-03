@@ -33,7 +33,7 @@ resource "google_bigquery_dataset" "olist_ecommerce" {
 resource "google_bigquery_table" "olist_customers_dataset" {
   dataset_id = google_bigquery_dataset.olist_ecommerce.dataset_id
   table_id   = "olist_customers_dataset"
-  schema = <<EOF
+  schema     = <<EOF
 [
   {"name": "customer_id", "type": "STRING"},
   {"name": "customer_unique_id", "type": "STRING"},
@@ -47,7 +47,7 @@ EOF
 resource "google_bigquery_table" "olist_geolocation_dataset" {
   dataset_id = google_bigquery_dataset.olist_ecommerce.dataset_id
   table_id   = "olist_geolocation_dataset"
-  schema = <<EOF
+  schema     = <<EOF
 [
   {"name": "geolocation_zip_code_prefix", "type": "INTEGER"},
   {"name": "geolocation_lat", "type": "FLOAT"},
@@ -61,7 +61,7 @@ EOF
 resource "google_bigquery_table" "olist_orders_dataset" {
   dataset_id = google_bigquery_dataset.olist_ecommerce.dataset_id
   table_id   = "olist_orders_dataset"
-  schema = <<EOF
+  schema     = <<EOF
 [
   {"name": "order_id", "type": "STRING"},
   {"name": "customer_id", "type": "STRING"},
@@ -78,7 +78,7 @@ EOF
 resource "google_bigquery_table" "olist_order_items_dataset" {
   dataset_id = google_bigquery_dataset.olist_ecommerce.dataset_id
   table_id   = "olist_order_items_dataset"
-  schema = <<EOF
+  schema     = <<EOF
 [
   {"name": "order_id", "type": "STRING"},
   {"name": "order_item_id", "type": "INTEGER"},
@@ -94,7 +94,7 @@ EOF
 resource "google_bigquery_table" "olist_order_payments_dataset" {
   dataset_id = google_bigquery_dataset.olist_ecommerce.dataset_id
   table_id   = "olist_order_payments_dataset"
-  schema = <<EOF
+  schema     = <<EOF
 [
   {"name": "order_id", "type": "STRING"},
   {"name": "payment_sequential", "type": "INTEGER"},
@@ -108,7 +108,7 @@ EOF
 resource "google_bigquery_table" "olist_order_reviews_dataset" {
   dataset_id = google_bigquery_dataset.olist_ecommerce.dataset_id
   table_id   = "olist_order_reviews_dataset"
-  schema = <<EOF
+  schema     = <<EOF
 [
   {"name": "review_id", "type": "STRING"},
   {"name": "order_id", "type": "STRING"},
@@ -124,7 +124,7 @@ EOF
 resource "google_bigquery_table" "olist_products_dataset" {
   dataset_id = google_bigquery_dataset.olist_ecommerce.dataset_id
   table_id   = "olist_products_dataset"
-  schema = <<EOF
+  schema     = <<EOF
 [
   {"name": "product_id", "type": "STRING"},
   {"name": "product_category_name", "type": "STRING"},
@@ -142,7 +142,7 @@ EOF
 resource "google_bigquery_table" "olist_sellers_dataset" {
   dataset_id = google_bigquery_dataset.olist_ecommerce.dataset_id
   table_id   = "olist_sellers_dataset"
-  schema = <<EOF
+  schema     = <<EOF
 [
   {"name": "seller_id", "type": "STRING"},
   {"name": "seller_zip_code_prefix", "type": "INTEGER"},
@@ -155,7 +155,7 @@ EOF
 resource "google_bigquery_table" "product_category_name_translation" {
   dataset_id = google_bigquery_dataset.olist_ecommerce.dataset_id
   table_id   = "product_category_name_translation"
-  schema = <<EOF
+  schema     = <<EOF
 [
   {"name": "product_category_name", "type": "STRING"},
   {"name": "product_category_name_english", "type": "STRING"}
