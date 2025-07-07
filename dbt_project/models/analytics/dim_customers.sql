@@ -12,7 +12,7 @@ WITH customers AS (
 
 geolocations AS (
     SELECT
-        -- Note: your staging model should have renamed these already, but this is safe
+
         geolocation_zip_code_prefix,
         geolocation_lat AS latitude,
         geolocation_lng AS longitude
