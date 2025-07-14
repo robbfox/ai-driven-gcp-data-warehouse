@@ -152,3 +152,6 @@ The raw data is loaded into the following tables in the `olist_ecommerce` BigQue
 | `olist_products_dataset.csv`       | `['product_id', 'product_category_name', 'product_name_lenght', 'product_description_lenght', 'product_photos_qty', 'product_weight_g', 'product_length_cm', 'product_height_cm', 'product_width_cm']` |
 | `olist_sellers_dataset.csv`        | `['seller_id', 'seller_zip_code_prefix', 'seller_city', 'seller_state']`                                                                                            |
 | `product_category_name_translation.csv` | `['product_category_name', 'product_category_name_english']`                                                                                                     |
+## Acknowledgements
+
+This project was developed with invaluable support from Google's [gemini-cli](https://blog.google/technology/developers/introducing-gemini-cli-open-source-ai-agent/). This tool was instrumental in generating a code framework, accelerating deployment, debugging, and drafting documentation.
